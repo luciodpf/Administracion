@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Administración</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#1f4d3a">
+<style>
+:root{
+  --bg:#f4f2ec; --card:#ffffff; --ink:#1e2420; --muted:#66706a; --line:#e2ded3;
+  --brand:#1f4d3a; --brand-2:#2f6b52; --brand-soft:#e3eee7;
+  --ok:#2e7d4f; --ok-soft:#e2f2e8; --warn:#9a6400; --warn-soft:#fbf0d9;
+  --bad:#b3261e; --bad-soft:#fbe4e2; --grey-soft:#efede8;
+  --bar:#2f6b52; --shadow:0 1px 2px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#141816; --card:#1d2320; --ink:#e7ebe8; --muted:#9aa59f; --line:#2e3632;
+    --brand:#7fc4a0; --brand-2:#5fae86; --brand-soft:#23332b;
+    --ok:#7fd1a0; --ok-soft:#1f3328; --warn:#e8b65a; --warn-soft:#3a2f1a;
+    --bad:#f08a80; --bad-soft:#3b2220; --grey-soft:#262c29;
+    --bar:#5fae86; --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+a{color:var(--brand)}
+button{font:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px 48px}
+header.top{background:var(--brand);color:#fff;padding:14px 0}
+@media (prefers-color-scheme: dark){ header.top{background:#1a2b23;color:var(--ink)} }
+header.top .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0}
+header.top h1{font-size:19px;margin:0;font-weight:650;letter-spacing:.2px;flex:1}
+header.top .quien{font-size:13px;opacity:.85;text-align:right;line-height:1.2}
+header.top button{background:transparent;color:inherit;border:1px solid rgba(255,255,255,.45);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px}
+.oculto{display:none!important}
+.centro{min-height:70vh;display:flex;align-items:center;justify-content:center}
+.login{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 24px;max-width:380px;width:100%;text-align:center;box-shadow:var(--shadow)}
+.login h2{margin:0 0 6px;font-size:22px}
+.login p{color:var(--muted);margin:0 0 20px;font-size:15px}
+#botonGoogle{display:flex;justify-content:center;min-height:44px}
+.error{color:var(--bad);background:var(--bad-soft);border-radius:10px;padding:10px 12px;margin-top:14px;font-size:14px;text-align:left}
+.cargando{color:var(--muted);padding:40px 0;text-align:center}
+.fecha{color:var(--muted);font-size:14px;margin:18px 0 4px}
+h2.seccion{font-size:15px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:26px 0 10px;font-weight:650}
+.grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.cuadro{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;color:var(--ink);text-decoration:none;box-shadow:var(--shadow);min-height:132px;transition:transform .08s,border-color .15s}
+.cuadro:hover{border-color:var(--brand-2)}
+.cuadro:active{transform:scale(.99)}
+.cuadro .ico{font-size:28px;line-height:1}
+.cuadro .tit{font-weight:650;font-size:17px}
+.cuadro .sub{color:var(--muted);font-size:14px;flex:1}
+.cuadro .dato{font-weight:700;font-size:18px;color:var(--brand)}
+.cuadro .chip{align-self:flex-start;font-size:12px;border-radius:999px;padding:2px 9px;background:var(--brand-soft);color:var(--brand)}
+.cuadro.prox{cursor:default;opacity:.62;box-shadow:none;background:transparent;border-style:dashed}
+.cuadro.prox:hover{border-color:var(--line)}
+.cuadro.prox .chip{background:var(--grey-soft);color:var(--muted)}
+.volver{display:inline-flex;align-items:center;gap:6px;margin:18px 0 0;background:none;border:none;color:var(--brand);cursor:pointer;padding:6px 0;font-size:15px;font-weight:600}
+.modtit{font-size:24px;margin:6px 0 2px}
+.modsub{color:var(--muted);margin:0 0 6px}
+.bloque{margin-top:22px}
+.bloque > h3{font-size:17px;margin:0 0 4px}
+.bloque > .nota{color:var(--muted);font-size:14px;margin:0 0 10px}
+.tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+@media (max-width:420px){ .tarjeta{padding:10px 12px} .tarjeta .va{font-size:18px} .grilla{grid-template-columns:1fr 1fr;gap:10px} .cuadro{padding:12px;min-height:120px} .cuadro .tit{font-size:15.5px} .cuadro .sub{font-size:13px} .cuadro .dato{font-size:15.5px} }
+.tarjeta{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tarjeta .et{color:var(--muted);font-size:13px}
+.tarjeta .va{white-space:nowrap;font-size:22px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+.tarjeta .no{color:var(--muted);font-size:12.5px;margin-top:2px}
+.tarjeta.alerta{border-color:var(--bad);background:var(--bad-soft)}
+.tarjeta.alerta .va{color:var(--bad)}
+.tarjeta.ok .va{color:var(--ok)}
+.tarjeta.destaque{background:var(--brand);border-color:var(--brand);color:#fff}
+.tarjeta.destaque .et,.tarjeta.destaque .no{color:rgba(255,255,255,.85)}
+@media (prefers-color-scheme: dark){ .tarjeta.destaque{background:var(--brand-soft);border-color:var(--brand-2);color:var(--ink)} .tarjeta.destaque .et,.tarjeta.destaque .no{color:var(--muted)} }
+.marco{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--grey-soft);text-align:left;font-weight:650;font-size:13px;color:var(--muted);position:sticky;top:0}
+td.n,th.n{text-align:right}
+tr:last-child td{border-bottom:none}
+tr.gris td{color:var(--muted);background:var(--grey-soft)}
+tr.alerta td{background:var(--bad-soft)}
+tr.total td{font-weight:700;background:var(--brand-soft);border-top:2px solid var(--line)}
+td.texto-largo{white-space:normal;min-width:220px}
+.est{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12.5px;font-weight:600}
+.est.ok{background:var(--ok-soft);color:var(--ok)}
+.est.warn{background:var(--warn-soft);color:var(--warn)}
+.est.gris{background:var(--grey-soft);color:var(--muted)}
+.est.bad{background:var(--bad-soft);color:var(--bad)}
+.buscar{width:100%;max-width:320px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);margin-bottom:8px;font-size:15px}
+.mas{display:block;width:100%;border:none;border-top:1px solid var(--line);background:var(--grey-soft);color:var(--brand);padding:9px;cursor:pointer;font-weight:600}
+.barras{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:10px}
+.barra .fila{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.barra .fila b{font-variant-numeric:tabular-nums}
+.barra .pista{height:10px;background:var(--grey-soft);border-radius:5px;margin-top:4px;overflow:hidden}
+.barra .lleno{height:100%;background:var(--bar);border-radius:5px}
+.pestanas{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;border-bottom:1px solid var(--line);-webkit-overflow-scrolling:touch}
+.pestanas button{border:none;background:none;padding:10px 14px;cursor:pointer;color:var(--muted);font-weight:600;border-bottom:3px solid transparent;white-space:nowrap}
+.pestanas button.activa{color:var(--brand);border-bottom-color:var(--brand)}
+.aviso{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:14px}
+.parrafo{color:var(--ink);font-size:15px;white-space:pre-line}
+footer{color:var(--muted);font-size:12.5px;text-align:center;margin-top:40px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>Administración</h1>
+    <div class="quien oculto" id="quien"></div>
+    <button class="oculto" id="btnSalir" type="button">Salir</button>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+  <div class="cargando">Cargando…</div>
+</main>
+
+<script>
+/* =======================================================================
+   CONFIGURACIÓN — lo único que hay que tocar al instalar.
+   (Estos dos datos no son secretos: sin una cuenta autorizada no sirven.)
+   ======================================================================= */
+var BACKEND = 'PEGAR_ACA_LA_URL_QUE_TERMINA_EN_EXEC';
+var GOOGLE_CLIENT_ID = 'PEGAR_ACA_EL_ID_DE_CLIENTE.apps.googleusercontent.com';
+
+/* ======================================================================= */
+var app = document.getElementById('app');
+var SES_KEY = 'admin_sesion';
+var estado = { sesion: null, indice: null, modulos: {} };
+var DEMO = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /[?&]demo\b/.test(location.search);
+
+function guardar(k, v){ try{ v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+function leer(k){ try{ return JSON.parse(localStorage.getItem(k) || 'null'); }catch(e){ return null; } }
+
+/* ---------------- servidor ---------------- */
+function llamar(fn, args){
+  if (DEMO) return llamarDemo(fn, args);
+  return fetch(BACKEND, {
+    method:'POST',
+    headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+    body: JSON.stringify({ fn: fn, args: args || [] })
+  }).then(function(r){ return r.json(); }).then(function(res){
+    if (res && res.ok) return res.r;
+    var msg = (res && res.error) || 'Error del servidor';
+    if (msg === 'SESION') { cerrarLocal(); throw new Error('Tu sesión venció. Volvé a entrar.'); }
+    throw new Error(msg);
+  });
+}
+/* Solo en esta PC (localhost/?demo): lee los .json de la carpeta demo/ para probar el diseño. */
+function llamarDemo(fn, args){
+  if (fn === 'entrar' || fn === 'revalidar') return Promise.resolve({ codigo:'demo', email:'demo', nombre:'Prueba local' });
+  if (fn === 'salir') return Promise.resolve(true);
+  var arch = fn === 'inicio' ? 'demo/indice.json' : 'demo/mod_' + args[1] + '.json';
+  return fetch(arch, { cache:'no-store' }).then(function(r){ if(!r.ok) throw new Error('Este cuadro todavía no tiene datos cargados.'); return r.json(); });
+}
+
+/* ---------------- formatos ---------------- */
+var nf0 = new Intl.NumberFormat('es-AR', { maximumFractionDigits:0 });
+var nf2 = new Intl.NumberFormat('es-AR', { maximumFractionDigits:2 });
+var nf1 = new Intl.NumberFormat('es-AR', { minimumFractionDigits:1, maximumFractionDigits:1 });
+function esNum(v){ return typeof v === 'number' && isFinite(v); }
+function fmt(v, f){
+  if (v === null || v === undefined || v === '') return '';
+  switch (f) {
+    case 'kg':    return esNum(v) ? (Math.abs(v) < 0.5 ? '0' : nf0.format(v)) : esc(v);
+    case 'pesos': return esNum(v) ? '$ ' + nf0.format(v) : esc(v);
+    case 'usd':   return esNum(v) ? 'U$S ' + nf0.format(v) : esc(v);
+    case 'millones': return esNum(v) ? '$ ' + nf1.format(v / 1e6) + ' M' : esc(v);
+    case 'num':   return esNum(v) ? nf2.format(v) : esc(v);
+    case 'pct':   return esNum(v) ? nf1.format(v * 100) + ' %' : esc(v);
+    case 'fecha': return fecha(v);
+    case 'estado':return estadoChip(v);
+    default:      return esc(v);
+  }
+}
+function fecha(v){
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v));
+  return m ? m[3] + '/' + m[2] + '/' + m[1] : esc(v);
+}
+function estadoChip(v){
+  var s = String(v), k = s.toLowerCase(), c = 'bad';
+  if (/^(ok|al d[ií]a|pagado|resuelto|s[ií])$/.test(k)) c = 'ok';
+  else if (/pendiente|a confirmar|revisar/.test(k)) c = 'warn';
+  else if (/cerrad|anulad|^no$|sin datos/.test(k)) c = 'gris';
+  return '<span class="est ' + c + '">' + esc(s) + '</span>';
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+var NUMERICOS = { kg:1, pesos:1, usd:1, num:1, pct:1, millones:1 };
+
+/* ---------------- pantallas ---------------- */
+function pantallaLogin(error){
+  mostrarUsuario(null);
+  app.innerHTML =
+    '<div class="centro"><div class="login">' +
+      '<h2>Administración</h2>' +
+      '<p>Entrá con tu cuenta de Google. Solo pueden entrar las cuentas autorizadas.</p>' +
+      '<div id="botonGoogle"></div>' +
+      (error ? '<div class="error">' + esc(error) + '</div>' : '') +
+    '</div></div>';
+  if (DEMO) {
+    document.getElementById('botonGoogle').innerHTML = '<button class="volver" onclick="alEntrar({credential:\'demo\'})">Entrar (prueba local)</button>';
+    return;
+  }
+  if (/^PEGAR_/.test(GOOGLE_CLIENT_ID) || /^PEGAR_/.test(BACKEND)) {
+    document.getElementById('botonGoogle').innerHTML = '<div class="aviso">Falta configurar BACKEND y GOOGLE_CLIENT_ID en index.html.</div>';
+    return;
+  }
+  cuandoGoogle(function(){
+    google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: alEntrar, ux_mode:'popup', auto_select:false });
+    google.accounts.id.renderButton(document.getElementById('botonGoogle'),
+      { theme:'outline', size:'large', text:'signin_with', shape:'pill', locale:'es' });
+  });
+}
+function cuandoGoogle(fn){
+  if (window.google && google.accounts && google.accounts.id) return fn();
+  var s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = fn;
+  s.onerror = function(){ pantallaLogin('No se pudo cargar el botón de Google. Revisá la conexión.'); };
+  document.head.appendChild(s);
+}
+function alEntrar(resp){
+  app.innerHTML = '<div class="cargando">Verificando tu cuenta…</div>';
+  llamar('entrar', [resp.credential]).then(function(s){
+    estado.sesion = s; guardar(SES_KEY, s);
+    mostrarUsuario(s);
+    router();
+  }).catch(function(e){ pantallaLogin(e.message); });
+}
+function mostrarUsuario(s){
+  var q = document.getElementById('quien'), b = document.getElementById('btnSalir');
+  if (s) { q.textContent = s.nombre || s.email; q.classList.remove('oculto'); b.classList.remove('oculto'); }
+  else { q.classList.add('oculto'); b.classList.add('oculto'); }
+}
+function cerrarLocal(){
+  estado.sesion = null; estado.indice = null; estado.modulos = {};
+  guardar(SES_KEY, null); mostrarUsuario(null);
+}
+document.getElementById('btnSalir').onclick = function(){
+  var c = estado.sesion && estado.sesion.codigo;
+  cerrarLocal();
+  if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect();
+  if (c) llamar('salir', [c]).catch(function(){});
+  location.hash = '';
+  pantallaLogin();
+};
+
+function pantallaInicio(){
+  var pintar = function(ix){
+    var h = '';
+    if (ix.actualizado) h += '<div class="fecha">Datos actualizados al ' + esc(ix.actualizado) + '</div>';
+    (ix.secciones || []).forEach(function(sec){
+      h += '<h2 class="seccion">' + esc(sec.titulo) + '</h2><div class="grilla">';
+      (sec.cuadros || []).forEach(function(c){ h += cuadroHtml(c); });
+      h += '</div>';
+    });
+    if (!(ix.secciones || []).length) h += '<div class="aviso" style="margin-top:20px">Todavía no se publicaron datos.</div>';
+    h += '<footer>Administración · solo cuentas autorizadas</footer>';
+    app.innerHTML = h;
+  };
+  if (estado.indice) return pintar(estado.indice);
+  app.innerHTML = '<div class="cargando">Cargando…</div>';
+  llamar('inicio', [estado.sesion.codigo]).then(function(ix){ estado.indice = ix; pintar(ix); })
+    .catch(errorGeneral);
+}
+function cuadroHtml(c){
+  var cuerpo =
+    '<span class="ico">' + esc(c.icono || '▪') + '</span>' +
+    '<span class="tit">' + esc(c.titulo) + '</span>' +
+    '<span class="sub">' + esc(c.subtitulo || '') + '</span>' +
+    (c.dato ? '<span class="dato">' + esc(c.dato) + '</span>' : '');
+  if (c.tipo === 'enlace')
+    return '<a class="cuadro" href="' + esc(c.url) + '" target="_blank" rel="noopener">' + cuerpo + '<span class="chip">Abrir ↗</span></a>';
+  if (c.tipo === 'modulo')
+    return '<a class="cuadro" href="#/m/' + encodeURIComponent(c.id) + '">' + cuerpo + '</a>';
+  return '<div class="cuadro prox">' + cuerpo + '<span class="chip">Próximamente</span></div>';
+}
+
+function pantallaModulo(id){
+  var pintar = function(m){
+    var h = '<button class="volver" onclick="location.hash=\'\'">← Inicio</button>' +
+            '<h1 class="modtit">' + esc(m.titulo || id) + '</h1>' +
+            (m.subtitulo ? '<p class="modsub">' + esc(m.subtitulo) + '</p>' : '') +
+            (m.actualizado ? '<p class="modsub">Datos al ' + esc(m.actualizado) + '</p>' : '') +
+            '<div id="cuerpo"></div>';
+    app.innerHTML = h;
+    pintarBloques(document.getElementById('cuerpo'), m.bloques || []);
+    window.scrollTo(0, 0);
+  };
+  if (estado.modulos[id]) return pintar(estado.modulos[id]);
+  app.innerHTML = '<div class="cargando">Cargando…</div>';
+  llamar('modulo', [estado.sesion.codigo, id]).then(function(m){ estado.modulos[id] = m; pintar(m); })
+    .catch(errorGeneral);
+}
+function errorGeneral(e){
+  if (!estado.sesion) return pantallaLogin(e.message);
+  app.innerHTML = '<button class="volver" onclick="location.hash=\'\'">← Inicio</button><div class="error">' + esc(e.message) + '</div>';
+}
+
+/* ---------------- bloques genéricos ----------------
+   Cada cuadro es una lista de bloques. Para sumar un cuadro nuevo no hace
+   falta tocar esta página: alcanza con que la PC mande sus bloques.
+   tipos: tarjetas, tabla, barras, pestanas, texto, aviso              */
+function pintarBloques(cont, bloques){
+  bloques.forEach(function(b){
+    var d = document.createElement('section');
+    d.className = 'bloque';
+    if (b.titulo && b.tipo !== 'pestanas') d.innerHTML = '<h3>' + esc(b.titulo) + '</h3>';
+    if (b.nota) d.innerHTML += '<p class="nota">' + esc(b.nota) + '</p>';
+    var f = PINTORES[b.tipo];
+    if (f) f(d, b); else d.innerHTML += '<div class="aviso">Bloque desconocido: ' + esc(b.tipo) + '</div>';
+    cont.appendChild(d);
+  });
+}
+var PINTORES = {
+  tarjetas: function(d, b){
+    var h = '<div class="tarjetas">';
+    (b.items || []).forEach(function(t){
+      h += '<div class="tarjeta ' + esc(t.tono || '') + '"><div class="et">' + esc(t.etiqueta) + '</div>' +
+           '<div class="va">' + fmt(t.valor, t.formato) + '</div>' +
+           (t.nota ? '<div class="no">' + esc(t.nota) + '</div>' : '') + '</div>';
+    });
+    d.insertAdjacentHTML('beforeend', h + '</div>');
+  },
+  texto: function(d, b){ d.insertAdjacentHTML('beforeend', '<div class="parrafo">' + esc(b.texto || '') + '</div>'); },
+  aviso: function(d, b){ d.insertAdjacentHTML('beforeend', '<div class="aviso">' + esc(b.texto || '') + '</div>'); },
+  barras: function(d, b){
+    var items = b.items || [], max = 0;
+    items.forEach(function(i){ if (esNum(i.valor) && i.valor > max) max = i.valor; });
+    var h = '<div class="barras">';
+    items.forEach(function(i){
+      var p = max > 0 && esNum(i.valor) ? Math.max(0, i.valor / max * 100) : 0;
+      h += '<div class="barra"><div class="fila"><span>' + esc(i.etiqueta) + '</span><b>' + fmt(i.valor, b.formato) + '</b></div>' +
+           '<div class="pista"><div class="lleno" style="width:' + p.toFixed(1) + '%"></div></div></div>';
+    });
+    d.insertAdjacentHTML('beforeend', h + '</div>');
+  },
+  pestanas: function(d, b){
+    var lista = b.pestanas || [];
+    var bar = document.createElement('div'); bar.className = 'pestanas';
+    var cuerpo = document.createElement('div');
+    if (b.titulo) d.insertAdjacentHTML('afterbegin', '<h3>' + esc(b.titulo) + '</h3>');
+    lista.forEach(function(p, i){
+      var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = p.nombre;
+      bt.onclick = function(){
+        [].forEach.call(bar.children, function(x){ x.classList.remove('activa'); });
+        bt.classList.add('activa'); cuerpo.innerHTML = '';
+        pintarBloques(cuerpo, p.bloques || []);
+      };
+      bar.appendChild(bt);
+    });
+    d.appendChild(bar); d.appendChild(cuerpo);
+    if (bar.firstChild) bar.firstChild.click();
+  },
+  tabla: function(d, b){
+    var cols = b.columnas || [], filas = b.filas || [], marcas = b.marcas || [];
+    var limite = b.mostrar || 0, filtro = '';
+    var marco = document.createElement('div');
+    if (b.buscar) {
+      var inp = document.createElement('input'); inp.className = 'buscar'; inp.type = 'search';
+      inp.placeholder = 'Buscar…';
+      inp.oninput = function(){ filtro = inp.value.toLowerCase(); dibujar(); };
+      d.appendChild(inp);
+    }
+    marco.className = 'marco'; d.appendChild(marco);
+    function dibujar(){
+      var idx = [];
+      filas.forEach(function(f, i){
+        if (filtro && f.join(' ').toLowerCase().indexOf(filtro) < 0) return;
+        idx.push(i);
+      });
+      var ver = limite && !filtro ? idx.slice(0, limite) : idx;
+      var h = '<div class="scroll"><table><thead><tr>';
+      cols.forEach(function(c){ h += '<th class="' + (NUMERICOS[c.f] ? 'n' : '') + '">' + esc(c.t) + '</th>'; });
+      h += '</tr></thead><tbody>';
+      ver.forEach(function(i){
+        h += '<tr class="' + esc(marcas[i] || '') + '">';
+        cols.forEach(function(c, j){
+          var v = filas[i][j];
+          h += '<td class="' + (NUMERICOS[c.f] ? 'n' : '') + (c.largo ? ' texto-largo' : '') + '">' + fmt(v, c.f) + '</td>';
+        });
+        h += '</tr>';
+      });
+      if (!ver.length) h += '<tr><td colspan="' + cols.length + '" style="color:var(--muted)">' + (filtro ? 'Nada coincide.' : 'Sin datos.') + '</td></tr>';
+      if (b.total && !filtro) {
+        h += '<tr class="total">';
+        cols.forEach(function(c, j){ h += '<td class="' + (NUMERICOS[c.f] ? 'n' : '') + '">' + fmt(b.total[j], c.f) + '</td>'; });
+        h += '</tr>';
+      }
+      h += '</tbody></table></div>';
+      if (limite && !filtro && idx.length > limite)
+        h += '<button class="mas" type="button">Ver todas (' + idx.length + ')</button>';
+      marco.innerHTML = h;
+      var m = marco.querySelector('.mas');
+      if (m) m.onclick = function(){ limite = 0; dibujar(); };
+    }
+    dibujar();
+  }
+};
+
+/* ---------------- navegación ---------------- */
+function router(){
+  if (!estado.sesion) return pantallaLogin();
+  var m = /^#\/m\/([^/]+)/.exec(location.hash);
+  if (m) pantallaModulo(decodeURIComponent(m[1])); else pantallaInicio();
+}
+window.addEventListener('hashchange', router);
+
+(function arrancar(){
+  var s = leer(SES_KEY);
+  if (!s || !s.codigo) return pantallaLogin();
+  llamar('revalidar', [s.codigo]).then(function(r){
+    estado.sesion = s; mostrarUsuario({ nombre: r.nombre, email: r.email }); router();
+  }).catch(function(e){ cerrarLocal(); pantallaLogin(/sesi[oó]n/i.test(e.message) ? '' : e.message); });
+})();
+
+if ('serviceWorker' in navigator && !DEMO) navigator.serviceWorker.register('sw.js').catch(function(){});
+</script>
+</body>
+</html>
