@@ -117,6 +117,34 @@ footer{color:var(--muted);font-size:12.5px;text-align:center;margin-top:40px}
 .leaflet-popup-content th,.leaflet-popup-content td{position:static;padding:2px 6px;border-bottom:1px solid #e2ded3;text-align:left;white-space:nowrap;background:none;color:#1e2420;font-size:12.5px}
 .leaflet-popup-content th{color:#66706a;font-weight:600}
 .leaflet-popup-content .n{text-align:right}
+.cult{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:760px){.cult{grid-template-columns:1fr}.cult>.cult-cards{order:-1;display:grid;grid-template-columns:1fr 1fr;gap:8px}.cult>.cult-cards .t{grid-column:1/-1}.cc{padding:9px 11px}.cc b{font-size:15.5px}.cc .cs{display:none}}
+.cult-camps{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.cult-camps button,.cult-modo button{font:inherit;font-size:14px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.cult-camps button.on,.cult-modo button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+@media (prefers-color-scheme: dark){.cult-camps button.on,.cult-modo button.on{color:#10201a}}
+.cult-modo{display:flex;gap:6px;margin:0 0 8px}
+.tm{position:relative;height:420px;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+@media (max-width:420px){.tm{height:340px}}
+.tm .h{position:absolute;box-sizing:border-box;border:2px solid var(--card);border-radius:7px;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;text-align:center;padding:3px;font-size:12.5px;font-weight:600;line-height:1.2;cursor:pointer;overflow:hidden;transition:opacity .15s}
+.tm .h small{display:block;opacity:.8;font-size:11px;font-weight:400}
+.tm .h.off,.cult-map-off{opacity:.18}
+.cult-mapa{height:420px;border-radius:14px;border:1px solid var(--line);overflow:hidden;background:var(--grey-soft)}
+@media (max-width:420px){.cult-mapa{height:340px}}
+.cult-cards{display:flex;flex-direction:column;gap:10px}
+.cult-cards .t{font-weight:650;color:var(--muted);font-size:14px;margin:0 0 2px}
+.cc{border:1.5px solid transparent;border-radius:14px;padding:11px 13px;cursor:pointer;transition:opacity .15s,border-color .15s}
+.cc .fila{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cc b{font-size:17px}
+.cc .ha{font-size:13px;padding:2px 9px;border-radius:999px;background:rgba(255,255,255,.55);white-space:nowrap}
+@media (prefers-color-scheme: dark){.cc .ha{background:rgba(0,0,0,.25)}}
+.cc .cs{font-size:12.5px;margin-top:4px;opacity:.85}
+.cc .rin{font-size:12.5px;margin-top:2px;font-weight:600}
+.cc.off{opacity:.4}
+.cc.on{border-color:currentColor}
+.cult-det{margin-top:10px;min-height:22px;font-size:14px;color:var(--muted)}
+.cult-det b{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -316,7 +344,7 @@ function errorGeneral(e){
 /* ---------------- bloques genéricos ----------------
    Cada cuadro es una lista de bloques. Para sumar un cuadro nuevo no hace
    falta tocar esta página: alcanza con que la PC mande sus bloques.
-   tipos: tarjetas, tabla, barras, pestanas, texto, aviso, mapa             */
+   tipos: tarjetas, tabla, barras, pestanas, texto, aviso, mapa, cultivos             */
 function cargarLeaflet(ok, mal){
   if (window.L) return ok();
   var base = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/';
@@ -339,6 +367,169 @@ function pintarBloques(cont, bloques){
   });
 }
 var PINTORES = {
+  cultivos: function(d, b){
+    var camps = b.campanias || [], geos = b.geos || [], colores = b.colores || {};
+    var oscuro = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+    function rgb(hex){ var n = parseInt(String(hex || '#888888').slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+    function fondo(g){ var c = rgb(colores[g]); return oscuro ? 'rgba(' + c + ',.42)' : 'rgba(' + c + ',.24)'; }
+    function tinta(g){ var c = rgb(colores[g]);
+      if (oscuro) return 'rgb(' + c.map(function(x){ return Math.round(x + (255 - x) * .72); }) + ')';
+      return 'rgb(' + c.map(function(x){ return Math.round(x * .42); }) + ')'; }
+    var nf = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+
+    var barCamp = document.createElement('div'); barCamp.className = 'cult-camps';
+    var cont = document.createElement('div'); cont.className = 'cult';
+    var izq = document.createElement('div'), der = document.createElement('div');
+    der.className = 'cult-cards';
+    var modo = document.createElement('div'); modo.className = 'cult-modo';
+    var tm = document.createElement('div'); tm.className = 'tm';
+    var mapaDiv = document.createElement('div'); mapaDiv.className = 'cult-mapa'; mapaDiv.style.display = 'none';
+    var det = document.createElement('div'); det.className = 'cult-det';
+    izq.appendChild(modo); izq.appendChild(tm); izq.appendChild(mapaDiv); izq.appendChild(det);
+    cont.appendChild(izq); cont.appendChild(der);
+    d.appendChild(barCamp); d.appendChild(cont);
+
+    var actual = null, elegidos = {}, verMapa = false, mapa = null, capaMapa = null;
+
+    ['Cuadros', 'Mapa'].forEach(function(n, i){
+      var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = n; if (!i) bt.className = 'on';
+      bt.onclick = function(){
+        verMapa = i === 1;
+        [].forEach.call(modo.children, function(x){ x.classList.remove('on'); }); bt.classList.add('on');
+        tm.style.display = verMapa ? 'none' : ''; mapaDiv.style.display = verMapa ? '' : 'none';
+        dibujar();
+      };
+      modo.appendChild(bt);
+    });
+    camps.forEach(function(c, i){
+      var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = 'Campaña ' + c.nombre;
+      bt.onclick = function(){
+        [].forEach.call(barCamp.children, function(x){ x.classList.remove('on'); }); bt.classList.add('on');
+        actual = c; elegidos = {}; det.textContent = ''; dibujar();
+      };
+      barCamp.appendChild(bt);
+      if (!i) { bt.className = 'on'; actual = c; }
+    });
+
+    function granos(){
+      var g = {};
+      (actual ? actual.lotes : []).forEach(function(l){
+        var x = g[l.grano] || (g[l.grano] = { grano: l.grano, ha: 0, kg: 0, haKg: 0, campos: {} });
+        x.ha += l.ha || 0; x.campos[l.campo] = 1;
+        if (l.kg) { x.kg += l.kg; x.haKg += l.ha || 0; }
+      });
+      return Object.keys(g).map(function(k){ return g[k]; }).sort(function(a, b){ return b.ha - a.ha; });
+    }
+    function visible(l){ var n = Object.keys(elegidos).length; return !n || elegidos[l.grano]; }
+
+    // Treemap "squarified": rectángulos lo más cuadrados posible, área = hectáreas.
+    function squarify(items, x, y, w, h, out){
+      items = items.filter(function(i){ return i.v > 0; });
+      if (!items.length) return;
+      var total = items.reduce(function(s, i){ return s + i.v; }, 0), escala = w * h / total;
+      var resto = items.map(function(i){ return { it: i, a: i.v * escala }; });
+      while (resto.length) {
+        var lado = Math.min(w, h), fila = [], peor = Infinity;
+        while (resto.length) {
+          var prueba = fila.concat([resto[0]]), s = 0, mx = 0, mn = Infinity;
+          prueba.forEach(function(r){ s += r.a; mx = Math.max(mx, r.a); mn = Math.min(mn, r.a); });
+          var p = Math.max(lado * lado * mx / (s * s), s * s / (lado * lado * mn));
+          if (p > peor) break;
+          peor = p; fila = prueba; resto.shift();
+        }
+        var sf = fila.reduce(function(s, r){ return s + r.a; }, 0), grosor = sf / lado, pos = 0;
+        fila.forEach(function(r){
+          var largo = r.a / grosor;
+          if (w >= h) out.push({ it: r.it, x: x, y: y + pos, w: grosor, h: largo });
+          else out.push({ it: r.it, x: x + pos, y: y, w: largo, h: grosor });
+          pos += largo;
+        });
+        if (w >= h) { x += grosor; w -= grosor; } else { y += grosor; h -= grosor; }
+      }
+    }
+    function detalle(l){
+      det.innerHTML = '<b>' + esc(l.campo + ' – lote ' + l.lote) + '</b> · ' + esc(l.grano) +
+        (l.variedad ? ' ' + esc(l.variedad) : '') + ' · ' + nf.format(l.ha || 0) + ' ha' +
+        (l.siembra ? ' · sembrado ' + fecha(l.siembra) : '') +
+        (l.rinde ? ' · <b>' + nf1.format(l.rinde) + ' qq/ha</b>' : (actual && actual.cosechada ? ' · sin kilos' : ''));
+    }
+    function dibujarCuadros(){
+      var W = tm.clientWidth || 600, H = tm.clientHeight || 400, rects = [];
+      var gs = granos();
+      squarify(gs.map(function(g){ return { v: g.ha, g: g }; }), 0, 0, W, H, rects);
+      tm.innerHTML = '';
+      rects.forEach(function(r){
+        var hijos = [];
+        squarify(actual.lotes.filter(function(l){ return l.grano === r.it.g.grano; })
+          .sort(function(a, b){ return b.ha - a.ha; }).map(function(l){ return { v: l.ha, l: l }; }), r.x, r.y, r.w, r.h, hijos);
+        hijos.forEach(function(c){
+          var l = c.it.l, e = document.createElement('div');
+          e.className = 'h' + (visible(l) ? '' : ' off');
+          e.style.cssText = 'left:' + c.x + 'px;top:' + c.y + 'px;width:' + c.w + 'px;height:' + c.h + 'px;background:' +
+            fondo(l.grano) + ';color:' + tinta(l.grano);
+          var chico = c.w < 70 || c.h < 34;
+          e.title = l.campo + ' ' + l.lote + ' · ' + l.grano + ' · ' + nf.format(l.ha) + ' ha';
+          e.innerHTML = chico ? '' : esc(l.campo) + (l.lote && l.lote !== '1' ? ' ' + esc(l.lote) : '') +
+            (c.h > 48 && c.w > 80 ? '<small>' + nf.format(l.ha) + ' ha</small>' : '');
+          e.onclick = function(){ detalle(l); };
+          tm.appendChild(e);
+        });
+      });
+    }
+    function dibujarMapa(){
+      cargarLeaflet(function(){
+        var L = window.L;
+        if (!mapa) {
+          mapa = L.map(mapaDiv, { scrollWheelZoom: false });
+          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            { maxZoom: 18, attribution: 'Imágenes © Esri' }).addTo(mapa);
+        }
+        if (capaMapa) mapa.removeLayer(capaMapa);
+        capaMapa = L.featureGroup().addTo(mapa);
+        var vistos = L.featureGroup();
+        actual.lotes.forEach(function(l){
+          if (l.geo == null || !geos[l.geo]) return;
+          var on = visible(l), col = colores[l.grano] || '#888';
+          var p = L.geoJSON(geos[l.geo], { style: { color: on ? col : '#ffffff', weight: on ? 2.5 : 1, fillColor: col,
+            fillOpacity: on ? .6 : .08, opacity: on ? 1 : .5 } });
+          p.bindTooltip(esc(l.campo + ' ' + l.lote + ' · ' + l.grano), { sticky: true });
+          p.on('click', function(){ detalle(l); });
+          capaMapa.addLayer(p);
+          if (on) {
+            vistos.addLayer(L.geoJSON(geos[l.geo]));
+            var pt = L.circleMarker(p.getBounds().getCenter(), { radius: 7, color: '#ffffff', weight: 2, fillColor: col, fillOpacity: 1 });
+            pt.bindTooltip(esc(l.campo + ' ' + l.lote + ' · ' + l.grano), { direction: 'top', offset: [0, -6] });
+            pt.on('click', function(){ detalle(l); });
+            capaMapa.addLayer(pt);
+          }
+        });
+        var caja = vistos.getLayers().length ? vistos.getBounds() : capaMapa.getBounds();
+        setTimeout(function(){ mapa.invalidateSize(); if (caja.isValid()) mapa.fitBounds(caja, { padding: [20, 20] }); }, 30);
+      }, function(){ mapaDiv.innerHTML = '<div class="aviso">No se pudo cargar el mapa (sin conexión).</div>'; });
+    }
+    function dibujarTarjetas(){
+      der.innerHTML = '<div class="t">Tocá un cultivo para marcarlo</div>';
+      var hay = Object.keys(elegidos).length;
+      granos().forEach(function(g){
+        var e = document.createElement('div');
+        e.className = 'cc' + (hay && !elegidos[g.grano] ? ' off' : '') + (elegidos[g.grano] ? ' on' : '');
+        e.style.background = fondo(g.grano); e.style.color = tinta(g.grano);
+        e.innerHTML = '<div class="fila"><b>' + esc(g.grano) + '</b><span class="ha">' + nf.format(g.ha) + ' ha</span></div>' +
+          '<div class="cs">' + esc(Object.keys(g.campos).sort().join(', ')) + '</div>' +
+          (g.haKg ? '<div class="rin">' + nf1.format(g.kg / g.haKg / 100) + ' qq/ha promedio</div>' : '');
+        e.onclick = function(){ if (elegidos[g.grano]) delete elegidos[g.grano]; else elegidos[g.grano] = 1; dibujar(); };
+        der.appendChild(e);
+      });
+    }
+    function dibujar(){
+      if (!actual) { tm.innerHTML = '<div class="parrafo" style="padding:14px">Sin siembras cargadas.</div>'; return; }
+      dibujarTarjetas();
+      if (verMapa) dibujarMapa(); else dibujarCuadros();
+    }
+    requestAnimationFrame(dibujar);
+    var ancho = 0;
+    window.addEventListener('resize', function(){ if (!verMapa && tm.isConnected && tm.clientWidth !== ancho) { ancho = tm.clientWidth; dibujarCuadros(); } });
+  },
   mapa: function(d, b){
     var div = document.createElement('div'); div.className = 'mapa'; d.appendChild(div);
     if (b.leyenda && b.leyenda.length) {
