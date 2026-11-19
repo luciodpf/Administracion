@@ -145,6 +145,8 @@ footer{color:var(--muted);font-size:12.5px;text-align:center;margin-top:40px}
 .cc.on{border-color:currentColor}
 .cult-det{margin-top:10px;min-height:22px;font-size:14px;color:var(--muted)}
 .cult-det b{color:var(--ink)}
+.mapa.full,.cult-mapa.full{position:fixed!important;top:0;left:0;width:100vw;height:100vh;height:100dvh;z-index:2000;border-radius:0;border:0;margin:0}
+.mapa-grande{width:34px;height:34px;border:2px solid rgba(0,0,0,.2);border-radius:5px;background:#fff;color:#222;font-size:18px;line-height:1;cursor:pointer;background-clip:padding-box}
 </style>
 </head>
 <body>
@@ -355,6 +357,38 @@ function cargarLeaflet(ok, mal){
   var sc = document.createElement('script'); sc.src = base + 'leaflet.min.js';
   sc.onload = ok; sc.onerror = mal; document.head.appendChild(sc);
 }
+function mapaBase(div){
+  // Igual que el visor de campos: Google satelital con rutas y nombres; Esri y Carto como alternativas.
+  var L = window.L;
+  var m = L.map(div, { zoomControl: false, scrollWheelZoom: true });
+  L.control.zoom({ position: 'bottomright' }).addTo(m);
+  var google = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: 'Google' }).addTo(m);
+  var esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri' });
+  var carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: 'CartoDB' });
+  L.control.layers({ 'Satélite (Google)': google, 'Satélite (Esri)': esri, 'Calles': carto }, null, { position: 'topright' }).addTo(m);
+  // botón de pantalla completa
+  var Grande = L.Control.extend({ options: { position: 'topleft' }, onAdd: function(){
+    var b = L.DomUtil.create('button', 'mapa-grande'); b.type = 'button'; b.title = 'Pantalla completa'; b.textContent = '⛶';
+    L.DomEvent.disableClickPropagation(b);
+    var lugar = null;
+    b.onclick = function(){
+      var on = !div.classList.contains('full');
+      // se pasa al <body> para que ocupe toda la pantalla aunque algo de la página lo contenga
+      if (on) { lugar = [div.parentNode, div.nextSibling]; document.body.appendChild(div); }
+      else if (lugar) { lugar[0].insertBefore(div, lugar[1]); }
+      div.classList.toggle('full', on);
+      document.body.style.overflow = on ? 'hidden' : ''; b.textContent = on ? '✕' : '⛶';
+      setTimeout(function(){ m.invalidateSize(); }, 60);
+    };
+    // si se cambia de pantalla con el mapa grande, se cierra
+    window.addEventListener('hashchange', function(){
+      if (div.classList.contains('full')) { div.classList.remove('full'); document.body.style.overflow = '';
+        if (div.parentNode === document.body) div.remove(); }
+    });
+    return b; } });
+  new Grande().addTo(m);
+  return m;
+}
 function pintarBloques(cont, bloques){
   bloques.forEach(function(b){
     var d = document.createElement('section');
@@ -480,9 +514,7 @@ var PINTORES = {
       cargarLeaflet(function(){
         var L = window.L;
         if (!mapa) {
-          mapa = L.map(mapaDiv, { scrollWheelZoom: false });
-          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            { maxZoom: 18, attribution: 'Imágenes © Esri' }).addTo(mapa);
+          mapa = mapaBase(mapaDiv);
         }
         if (capaMapa) mapa.removeLayer(capaMapa);
         capaMapa = L.featureGroup().addTo(mapa);
@@ -539,13 +571,7 @@ var PINTORES = {
     }
     cargarLeaflet(function(){
       var L = window.L;
-      var m = L.map(div, { scrollWheelZoom: false });
-      var sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 18, attribution: 'Imágenes © Esri' });
-      var calles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        { maxZoom: 18, attribution: '© OpenStreetMap' });
-      sat.addTo(m);
-      L.control.layers({ 'Satélite': sat, 'Calles': calles }, null, { position: 'topright' }).addTo(m);
+      var m = mapaBase(div);
       var grupo = L.featureGroup().addTo(m);
       (b.zonas || []).forEach(function(z){
         var capa = L.geoJSON(z.geometria, { style: { color: z.color || '#888', weight: 2.5, fillColor: z.color || '#888', fillOpacity: .5 } });
