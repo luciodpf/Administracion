@@ -106,6 +106,17 @@ td.texto-largo{white-space:normal;min-width:220px}
 .aviso{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:14px}
 .parrafo{color:var(--ink);font-size:15px;white-space:pre-line}
 footer{color:var(--muted);font-size:12.5px;text-align:center;margin-top:40px}
+.mapa{height:440px;border-radius:12px;border:1px solid var(--line);overflow:hidden;background:var(--grey-soft)}
+@media (max-width:420px){.mapa{height:360px}}
+.leyenda{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 0;font-size:13px;color:var(--muted)}
+.leyenda i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.leaflet-popup-content{margin:10px 12px;font:13px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.leaflet-popup-content b.t{display:block;font-size:14.5px;margin-bottom:2px}
+.leaflet-popup-content .s{color:#66706a;margin-bottom:6px}
+.leaflet-popup-content table{border-collapse:collapse;width:100%}
+.leaflet-popup-content th,.leaflet-popup-content td{position:static;padding:2px 6px;border-bottom:1px solid #e2ded3;text-align:left;white-space:nowrap;background:none;color:#1e2420;font-size:12.5px}
+.leaflet-popup-content th{color:#66706a;font-weight:600}
+.leaflet-popup-content .n{text-align:right}
 </style>
 </head>
 <body>
@@ -305,7 +316,17 @@ function errorGeneral(e){
 /* ---------------- bloques genéricos ----------------
    Cada cuadro es una lista de bloques. Para sumar un cuadro nuevo no hace
    falta tocar esta página: alcanza con que la PC mande sus bloques.
-   tipos: tarjetas, tabla, barras, pestanas, texto, aviso              */
+   tipos: tarjetas, tabla, barras, pestanas, texto, aviso, mapa             */
+function cargarLeaflet(ok, mal){
+  if (window.L) return ok();
+  var base = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/';
+  if (!document.getElementById('leaflet-css')) {
+    var l = document.createElement('link'); l.id = 'leaflet-css'; l.rel = 'stylesheet'; l.href = base + 'leaflet.min.css';
+    document.head.appendChild(l);
+  }
+  var sc = document.createElement('script'); sc.src = base + 'leaflet.min.js';
+  sc.onload = ok; sc.onerror = mal; document.head.appendChild(sc);
+}
 function pintarBloques(cont, bloques){
   bloques.forEach(function(b){
     var d = document.createElement('section');
@@ -318,6 +339,52 @@ function pintarBloques(cont, bloques){
   });
 }
 var PINTORES = {
+  mapa: function(d, b){
+    var div = document.createElement('div'); div.className = 'mapa'; d.appendChild(div);
+    if (b.leyenda && b.leyenda.length) {
+      var h = '<div class="leyenda">';
+      b.leyenda.forEach(function(l){ h += '<span><i style="background:' + esc(l.color) + '"></i>' + esc(l.etiqueta) + '</span>'; });
+      d.insertAdjacentHTML('beforeend', h + '</div>');
+    }
+    cargarLeaflet(function(){
+      var L = window.L;
+      var m = L.map(div, { scrollWheelZoom: false });
+      var sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 18, attribution: 'Imágenes © Esri' });
+      var calles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { maxZoom: 18, attribution: '© OpenStreetMap' });
+      sat.addTo(m);
+      L.control.layers({ 'Satélite': sat, 'Calles': calles }, null, { position: 'topright' }).addTo(m);
+      var grupo = L.featureGroup().addTo(m);
+      (b.zonas || []).forEach(function(z){
+        var capa = L.geoJSON(z.geometria, { style: { color: z.color || '#888', weight: 2.5, fillColor: z.color || '#888', fillOpacity: .5 } });
+        var h = '<b class="t">' + esc(z.nombre) + '</b>' + (z.sub ? '<div class="s">' + esc(z.sub) + '</div>' : '');
+        if (z.filas && z.filas.length) {
+          h += '<table><thead><tr>';
+          (z.columnas || []).forEach(function(c){ h += '<th class="' + (NUMERICOS[c.f] ? 'n' : '') + '">' + esc(c.t) + '</th>'; });
+          h += '</tr></thead><tbody>';
+          z.filas.forEach(function(f){
+            h += '<tr>';
+            f.forEach(function(v, i){ var c = (z.columnas || [])[i] || {}; h += '<td class="' + (NUMERICOS[c.f] ? 'n' : '') + '">' + (v == null ? '' : fmt(v, c.f)) + '</td>'; });
+            h += '</tr>';
+          });
+          h += '</tbody></table>';
+        }
+        capa.bindPopup(h, { maxWidth: 340 });
+        capa.bindTooltip(esc(z.nombre), { sticky: true });
+        grupo.addLayer(capa);
+        // un punto de color en el centro, para que el campo se vea con el mapa alejado
+        var punto = L.circleMarker(capa.getBounds().getCenter(),
+          { radius: 8, color: '#ffffff', weight: 2, fillColor: z.color || '#888', fillOpacity: 1 });
+        punto.bindPopup(h, { maxWidth: 340 });
+        punto.bindTooltip(esc(z.nombre), { direction: 'top', offset: [0, -6] });
+        grupo.addLayer(punto);
+      });
+      if (grupo.getLayers().length) m.fitBounds(grupo.getBounds(), { padding: [20, 20] });
+      else m.setView([-32.2, -61.4], 9);
+      setTimeout(function(){ m.invalidateSize(); }, 50);
+    }, function(){ div.innerHTML = '<div class="aviso">No se pudo cargar el mapa (sin conexión).</div>'; });
+  },
   tarjetas: function(d, b){
     var h = '<div class="tarjetas">';
     (b.items || []).forEach(function(t){

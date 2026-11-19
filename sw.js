@@ -1,6 +1,6 @@
 // Solo guarda la "cáscara" de la página para que abra rápido.
 // Nunca guarda datos: esos vienen siempre del servidor, con sesión.
-var CACHE = 'admin-v1';
+var CACHE = 'admin-v2';
 var BASE = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(BASE); }));
