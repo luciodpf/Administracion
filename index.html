@@ -129,6 +129,11 @@ footer{color:var(--muted);font-size:12.5px;text-align:center;margin-top:40px}
 .tm .h{position:absolute;box-sizing:border-box;border:2px solid var(--card);border-radius:7px;display:flex;align-items:center;justify-content:center;
   flex-direction:column;text-align:center;padding:3px;font-size:12.5px;font-weight:600;line-height:1.2;cursor:pointer;overflow:hidden;transition:opacity .15s}
 .tm .h small{display:block;opacity:.8;font-size:11px;font-weight:400}
+.cico{display:inline-flex;gap:2px;vertical-align:-3px;margin-right:5px}
+.tm .h .cico{margin:0 0 2px}
+.cico-i{display:block;flex:none}
+.cult-det-c{margin-top:4px}
+.cult-det-c .cico-i{display:inline-block;vertical-align:-3px}
 .tm .h.off,.cult-map-off{opacity:.18}
 .cult-mapa{height:420px;border-radius:14px;border:1px solid var(--line);overflow:hidden;background:var(--grey-soft)}
 @media (max-width:420px){.cult-mapa{height:340px}}
@@ -400,14 +405,48 @@ function pintarBloques(cont, bloques){
     cont.appendChild(d);
   });
 }
+/* Íconos de cultivo (trazo con currentColor, toman el color de la tinta del cuadro). */
+var ICONOS_CULTIVO = (function(){
+  var grano = function(x, y, r){ return '<ellipse cx="' + x + '" cy="' + y + '" rx="1.7" ry="2.7" transform="rotate(' + r + ' ' + x + ' ' + y + ')" fill="currentColor" stroke="none"/>'; };
+  var espiga = '<path d="M12 22V4"/>' + grano(9.6, 8, -35) + grano(14.4, 8, 35) + grano(9.6, 12.5, -35) + grano(14.4, 12.5, 35) +
+    grano(9.6, 17, -35) + grano(14.4, 17, 35) + grano(12, 4.2, 0);
+  var petalos = '';
+  for (var a = 0; a < 360; a += 45) petalos += '<ellipse cx="12" cy="5" rx="1.9" ry="2.9" transform="rotate(' + a + ' 12 12)"/>';
+  return {
+    trigo: espiga,
+    cebada: espiga + '<path d="M9 6.5 6.5 2M15 6.5 17.5 2M8.6 11 5.5 7.5M15.4 11l3.1-3.5"/>',
+    maiz: '<path d="M12 2.5c2.4 0 3.8 3.2 3.8 8.2S14.4 20 12 20s-3.8-4.3-3.8-9.3S9.6 2.5 12 2.5z"/><path d="M9.6 7.5h4.8M9 11h6M9.3 14.5h5.4"/>' +
+          '<path d="M8.4 12.5C5 13.6 3.8 18 4.6 21.5c2.6-.8 5.6-2.6 7.4-5.2M15.6 12.5c3.4 1.1 4.6 5.5 3.8 9-2.6-.8-5.6-2.6-7.4-5.2"/>',
+    soja: '<path d="M4.8 19.5C3.6 14 8 6.2 15 4.1c3.3-1 5.3 1.1 4.4 3.5-1.4 4.5-6.6 11.2-12.5 12.4-1.4.3-2 0-2.1-.5z"/>' +
+          '<circle cx="8.6" cy="15.6" r="1.9" fill="currentColor" stroke="none"/><circle cx="12" cy="11.6" r="1.9" fill="currentColor" stroke="none"/>' +
+          '<circle cx="15.4" cy="7.7" r="1.9" fill="currentColor" stroke="none"/>',
+    girasol: petalos + '<circle cx="12" cy="12" r="3.3" fill="currentColor" stroke="none"/>',
+    sorgo: '<path d="M12 22V11"/><path d="M12 15c-2-.3-3.6-1.4-4.5-3M12 18c2-.3 3.6-1.4 4.5-3"/>' +
+           [[12, 3.2], [10.2, 5.2], [13.8, 5.2], [9.6, 7.8], [12, 7.2], [14.4, 7.8], [10.8, 10], [13.2, 10]].map(function(p){
+             return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="1.45" fill="currentColor" stroke="none"/>'; }).join(''),
+    pasto: '<path d="M12 21.5V8M12 21.5C11 16 8.5 12.5 4.5 11M12 21.5c1-5.5 3.5-9 7.5-10.5M8.5 21.5c0-3.5-.8-6.2-2.8-8.5M15.5 21.5c0-3.5.8-6.2 2.8-8.5"/>' +
+           '<path d="M12 8c-1.2-1.4-1.4-3.4-.4-5.5 1.3 1.6 1.4 3.6.4 5.5z" fill="currentColor"/>',
+    hoja: '<path d="M5 19C5 10 10 5 19 5c0 9-5 14-14 14zM5 19l8-8"/>'
+  };
+})();
+function icono(g, tam){
+  var s = String(g || '').toLowerCase(), k =
+    /^trigo/.test(s) ? 'trigo' : /^cebada/.test(s) ? 'cebada' : /^ma[ií]z/.test(s) ? 'maiz' : /^soja/.test(s) ? 'soja' :
+    /^girasol/.test(s) ? 'girasol' : /^sorgo/.test(s) ? 'sorgo' :
+    /^(moha|pastura|avena|alfalfa|festuca|raigr|centeno|verdeo|grama)/.test(s) ? 'pasto' : 'hoja';
+  tam = tam || 16;
+  return '<svg class="cico-i" width="' + tam + '" height="' + tam + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONOS_CULTIVO[k] + '</svg>';
+}
 var PINTORES = {
   cultivos: function(d, b){
     var camps = b.campanias || [], geos = b.geos || [], colores = b.colores || {};
-    var oscuro = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+    var mqOscuro = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+    function oscuroAhora(){ return !!(mqOscuro && mqOscuro.matches); }
     function rgb(hex){ var n = parseInt(String(hex || '#888888').slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
-    function fondo(g){ var c = rgb(colores[g]); return oscuro ? 'rgba(' + c + ',.42)' : 'rgba(' + c + ',.24)'; }
+    function fondo(g){ var c = rgb(colores[g]); return oscuroAhora() ? 'rgba(' + c + ',.42)' : 'rgba(' + c + ',.24)'; }
     function tinta(g){ var c = rgb(colores[g]);
-      if (oscuro) return 'rgb(' + c.map(function(x){ return Math.round(x + (255 - x) * .72); }) + ')';
+      if (oscuroAhora()) return 'rgb(' + c.map(function(x){ return Math.round(x + (255 - x) * .72); }) + ')';
       return 'rgb(' + c.map(function(x){ return Math.round(x * .42); }) + ')'; }
     var nf = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
 
@@ -445,16 +484,53 @@ var PINTORES = {
       if (!i) { bt.className = 'on'; actual = c; }
     });
 
+    // Una parcela = campo + lote en la campaña. Si ese año tuvo dos cultivos
+    // (trigo y después soja 2ª) es una sola parcela con los dos: el área no se duplica.
+    function esInvierno(g){ return /^(trigo|cebada|avena|centeno|colza|arveja)/i.test(g); }
+    function parcelas(){
+      if (!actual) return [];
+      if (actual._p) return actual._p;
+      var m = {}, out = [];
+      actual.lotes.forEach(function(l){
+        var k = l.campo + '|' + l.lote, p = m[k];
+        if (!p) { p = m[k] = { campo: l.campo, lote: l.lote, cultivos: [], haG: {}, geo: l.geo }; out.push(p); }
+        p.cultivos.push(l); if (p.geo == null) p.geo = l.geo;
+        String(l.grano).split(' / ').forEach(function(g){ p.haG[g] = (p.haG[g] || 0) + (l.ha || 0); });
+      });
+      out.forEach(function(p){
+        p.cultivos.sort(function(a, b){
+          return (esInvierno(a.grano) ? 0 : 1) - (esInvierno(b.grano) ? 0 : 1) || String(a.siembra || '').localeCompare(String(b.siembra || ''));
+        });
+        p.granos = [];
+        p.cultivos.forEach(function(l){ String(l.grano).split(' / ').forEach(function(g){ if (p.granos.indexOf(g) < 0) p.granos.push(g); }); });
+        p.grupo = p.granos.join(' / ');
+        p.ha = Math.max.apply(null, p.granos.map(function(g){ return p.haG[g]; }));
+      });
+      return actual._p = out;
+    }
     function granos(){
       var g = {};
-      (actual ? actual.lotes : []).forEach(function(l){
-        var x = g[l.grano] || (g[l.grano] = { grano: l.grano, ha: 0, kg: 0, haKg: 0, campos: {} });
-        x.ha += l.ha || 0; x.campos[l.campo] = 1;
-        if (l.kg) { x.kg += l.kg; x.haKg += l.ha || 0; }
+      parcelas().forEach(function(p){
+        var x = g[p.grupo] || (g[p.grupo] = { grupo: p.grupo, granos: p.granos, ha: 0, campos: {}, rin: {} });
+        x.ha += p.ha; x.campos[p.campo] = 1;
+        p.cultivos.forEach(function(l){
+          if (!l.kg) return;
+          var r = x.rin[l.grano] || (x.rin[l.grano] = { kg: 0, ha: 0 }); r.kg += l.kg; r.ha += l.ha || 0;
+        });
       });
       return Object.keys(g).map(function(k){ return g[k]; }).sort(function(a, b){ return b.ha - a.ha; });
     }
-    function visible(l){ var n = Object.keys(elegidos).length; return !n || elegidos[l.grano]; }
+    function visible(p){ var n = Object.keys(elegidos).length; return !n || elegidos[p.grupo]; }
+    // Doble cultivo: el cuadro partido en diagonal, un color de cada lado.
+    function fondoDe(gs){
+      if (gs.length < 2) return fondo(gs[0]);
+      var paso = 100 / gs.length, partes = [];
+      gs.forEach(function(g, i){ partes.push(fondo(g) + ' ' + (i * paso) + '%', fondo(g) + ' ' + ((i + 1) * paso) + '%'); });
+      return 'linear-gradient(to bottom right,' + partes.join(',') + ')';
+    }
+    function iconos(gs, tam){
+      return '<span class="cico">' + gs.map(function(g){ return icono(g, tam); }).join('') + '</span>';
+    }
 
     // Treemap "squarified": rectángulos lo más cuadrados posible, área = hectáreas.
     function squarify(items, x, y, w, h, out){
@@ -481,11 +557,15 @@ var PINTORES = {
         if (w >= h) { x += grosor; w -= grosor; } else { y += grosor; h -= grosor; }
       }
     }
-    function detalle(l){
-      det.innerHTML = '<b>' + esc(l.campo + ' – lote ' + l.lote) + '</b> · ' + esc(l.grano) +
-        (l.variedad ? ' ' + esc(l.variedad) : '') + ' · ' + nf.format(l.ha || 0) + ' ha' +
-        (l.siembra ? ' · sembrado ' + fecha(l.siembra) : '') +
-        (l.rinde ? ' · <b>' + nf1.format(l.rinde) + ' qq/ha</b>' : (actual && actual.cosechada ? ' · sin kilos' : ''));
+    function detalle(p){
+      det.innerHTML = '<b>' + esc(p.campo + ' – lote ' + p.lote) + '</b> · ' + nf.format(p.ha || 0) + ' ha' +
+        p.cultivos.map(function(l){
+          return '<div class="cult-det-c">' + icono(String(l.grano).split(' / ')[0], 16) + ' <b>' + esc(l.grano) + '</b>' +
+            (l.variedad ? ' ' + esc(l.variedad) : '') +
+            (p.cultivos.length > 1 && l.ha !== p.ha ? ' · ' + nf.format(l.ha || 0) + ' ha' : '') +
+            (l.siembra ? ' · sembrado ' + fecha(l.siembra) : '') +
+            (l.rinde ? ' · <b>' + nf1.format(l.rinde) + ' qq/ha</b>' : (actual && actual.cosechada ? ' · sin kilos' : '')) + '</div>';
+        }).join('');
     }
     function dibujarCuadros(){
       var W = tm.clientWidth || 600, H = tm.clientHeight || 400, rects = [];
@@ -494,18 +574,19 @@ var PINTORES = {
       tm.innerHTML = '';
       rects.forEach(function(r){
         var hijos = [];
-        squarify(actual.lotes.filter(function(l){ return l.grano === r.it.g.grano; })
-          .sort(function(a, b){ return b.ha - a.ha; }).map(function(l){ return { v: l.ha, l: l }; }), r.x, r.y, r.w, r.h, hijos);
+        squarify(parcelas().filter(function(p){ return p.grupo === r.it.g.grupo; })
+          .sort(function(a, b){ return b.ha - a.ha; }).map(function(p){ return { v: p.ha, p: p }; }), r.x, r.y, r.w, r.h, hijos);
         hijos.forEach(function(c){
-          var l = c.it.l, e = document.createElement('div');
-          e.className = 'h' + (visible(l) ? '' : ' off');
+          var p = c.it.p, e = document.createElement('div');
+          e.className = 'h' + (visible(p) ? '' : ' off');
           e.style.cssText = 'left:' + c.x + 'px;top:' + c.y + 'px;width:' + c.w + 'px;height:' + c.h + 'px;background:' +
-            fondo(l.grano) + ';color:' + tinta(l.grano);
-          var chico = c.w < 70 || c.h < 34;
-          e.title = l.campo + ' ' + l.lote + ' · ' + l.grano + ' · ' + nf.format(l.ha) + ' ha';
-          e.innerHTML = chico ? '' : esc(l.campo) + (l.lote && l.lote !== '1' ? ' ' + esc(l.lote) : '') +
-            (c.h > 48 && c.w > 80 ? '<small>' + nf.format(l.ha) + ' ha</small>' : '');
-          e.onclick = function(){ detalle(l); };
+            fondoDe(p.granos) + ';color:' + tinta(p.granos[0]);
+          var chico = c.w < 70 || c.h < 34, ico = c.w >= 22 * p.granos.length && c.h >= 22;
+          e.title = p.campo + ' ' + p.lote + ' · ' + p.grupo + ' · ' + nf.format(p.ha) + ' ha';
+          e.innerHTML = chico ? (ico ? iconos(p.granos, 14) : '') :
+            (c.h > 60 ? iconos(p.granos, 16) : '') + esc(p.campo) + (p.lote && p.lote !== '1' ? ' ' + esc(p.lote) : '') +
+            (c.h > 48 && c.w > 80 ? '<small>' + nf.format(p.ha) + ' ha</small>' : '');
+          e.onclick = function(){ detalle(p); };
           tm.appendChild(e);
         });
       });
@@ -519,18 +600,19 @@ var PINTORES = {
         if (capaMapa) mapa.removeLayer(capaMapa);
         capaMapa = L.featureGroup().addTo(mapa);
         var vistos = L.featureGroup();
-        actual.lotes.forEach(function(l){
+        parcelas().forEach(function(l){
           if (l.geo == null || !geos[l.geo]) return;
-          var on = visible(l), col = colores[l.grano] || '#888';
-          var p = L.geoJSON(geos[l.geo], { style: { color: on ? col : '#ffffff', weight: on ? 2.5 : 1, fillColor: col,
+          // doble cultivo: relleno del primero y borde del segundo
+          var on = visible(l), col = colores[l.granos[0]] || '#888', borde = colores[l.granos[l.granos.length - 1]] || col;
+          var p = L.geoJSON(geos[l.geo], { style: { color: on ? borde : '#ffffff', weight: on ? (l.granos.length > 1 ? 4 : 2.5) : 1, fillColor: col,
             fillOpacity: on ? .6 : .08, opacity: on ? 1 : .5 } });
-          p.bindTooltip(esc(l.campo + ' ' + l.lote + ' · ' + l.grano), { sticky: true });
+          p.bindTooltip(esc(l.campo + ' ' + l.lote + ' · ' + l.grupo), { sticky: true });
           p.on('click', function(){ detalle(l); });
           capaMapa.addLayer(p);
           if (on) {
             vistos.addLayer(L.geoJSON(geos[l.geo]));
-            var pt = L.circleMarker(p.getBounds().getCenter(), { radius: 7, color: '#ffffff', weight: 2, fillColor: col, fillOpacity: 1 });
-            pt.bindTooltip(esc(l.campo + ' ' + l.lote + ' · ' + l.grano), { direction: 'top', offset: [0, -6] });
+            var pt = L.circleMarker(p.getBounds().getCenter(), { radius: 7, color: l.granos.length > 1 ? borde : '#ffffff', weight: l.granos.length > 1 ? 3 : 2, fillColor: col, fillOpacity: 1 });
+            pt.bindTooltip(esc(l.campo + ' ' + l.lote + ' · ' + l.grupo), { direction: 'top', offset: [0, -6] });
             pt.on('click', function(){ detalle(l); });
             capaMapa.addLayer(pt);
           }
@@ -544,12 +626,15 @@ var PINTORES = {
       var hay = Object.keys(elegidos).length;
       granos().forEach(function(g){
         var e = document.createElement('div');
-        e.className = 'cc' + (hay && !elegidos[g.grano] ? ' off' : '') + (elegidos[g.grano] ? ' on' : '');
-        e.style.background = fondo(g.grano); e.style.color = tinta(g.grano);
-        e.innerHTML = '<div class="fila"><b>' + esc(g.grano) + '</b><span class="ha">' + nf.format(g.ha) + ' ha</span></div>' +
+        e.className = 'cc' + (hay && !elegidos[g.grupo] ? ' off' : '') + (elegidos[g.grupo] ? ' on' : '');
+        e.style.background = fondoDe(g.granos); e.style.color = tinta(g.granos[0]);
+        var rin = g.granos.filter(function(x){ return g.rin[x]; }).map(function(x){
+          return (g.granos.length > 1 ? esc(x) + ' ' : '') + nf1.format(g.rin[x].kg / g.rin[x].ha / 100);
+        });
+        e.innerHTML = '<div class="fila"><b>' + iconos(g.granos, 18) + esc(g.grupo) + '</b><span class="ha">' + nf.format(g.ha) + ' ha</span></div>' +
           '<div class="cs">' + esc(Object.keys(g.campos).sort().join(', ')) + '</div>' +
-          (g.haKg ? '<div class="rin">' + nf1.format(g.kg / g.haKg / 100) + ' qq/ha promedio</div>' : '');
-        e.onclick = function(){ if (elegidos[g.grano]) delete elegidos[g.grano]; else elegidos[g.grano] = 1; dibujar(); };
+          (rin.length ? '<div class="rin">' + rin.join(' · ') + ' qq/ha promedio</div>' : '');
+        e.onclick = function(){ if (elegidos[g.grupo]) delete elegidos[g.grupo]; else elegidos[g.grupo] = 1; dibujar(); };
         der.appendChild(e);
       });
     }
@@ -559,6 +644,7 @@ var PINTORES = {
       if (verMapa) dibujarMapa(); else dibujarCuadros();
     }
     requestAnimationFrame(dibujar);
+    if (mqOscuro && mqOscuro.addEventListener) mqOscuro.addEventListener('change', function(){ if (tm.isConnected) dibujar(); });
     var ancho = 0;
     window.addEventListener('resize', function(){ if (!verMapa && tm.isConnected && tm.clientWidth !== ancho) { ancho = tm.clientWidth; dibujarCuadros(); } });
   },
